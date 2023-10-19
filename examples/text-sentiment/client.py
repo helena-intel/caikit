@@ -14,6 +14,7 @@
 
 # Standard
 import json
+import time
 
 # Third Party
 import grpc
@@ -33,7 +34,7 @@ if __name__ == "__main__":
             "runtime": {
                 "library": "text_sentiment",
                 "grpc": {"enabled": True},
-                "http": {"enabled": True},
+                "http": {"enabled": False},
             },
         }
     )
@@ -51,13 +52,16 @@ if __name__ == "__main__":
         client_stub = inference_service.stub_class(channel)
 
         # Run inference for two sample prompts
-        for text in ["I am not feeling well today!", "Today is a nice sunny day"]:
+        for text in ["I am not feeling well today!", "Today is a nice sunny day", "It's raining today", "I agree with this statement", "I disagree with this statement"]:
+            start = time.perf_counter()
             request = get_inference_request(HuggingFaceSentimentTask)(
                 text_input=text
             ).to_proto()
             response = client_stub.HuggingFaceSentimentTaskPredict(
                 request, metadata=[("mm-model-id", model_id)], timeout=1
             )
+            stop = time.perf_counter()
+            print(f"Duration: {(stop-start)*1000:.2f}")
             print("Text:", text)
             print("RESPONSE from gRPC:", response)
 

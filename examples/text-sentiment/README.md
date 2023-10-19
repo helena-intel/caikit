@@ -1,6 +1,15 @@
 # Text Sentiment Analysis Example
 
-This example uses the [HuggingFace DistilBERT base uncased finetuned SST-2](https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english) AI model to perform text sentiment analysis. The Caikit runtime loads the model and serves it so that it can be inferred or called.
+The example in this fork is modified to allow using either PyTorch or OpenVINO
+Hugging Face models. It also adds inference duration to the output. To change
+between PyTorch and OpenVINO, change the `backend` in
+models/text\_sentiment/config.yml. By default GRPC is enabled, REST is disabled.
+
+This is a proof-of-concept example. For OpenVINO inference, the model is
+converted on-the-fly. For production use, it is recommended to load the
+OpenVINO model directly.
+
+By default it uses the [assemblyai/bert-large-uncased-sst2](https://huggingface.co/assemblyai/bert-large-uncased-sst2) AI model from the Hugging Face hub to perform text sentiment analysis. The model can be changed in the models/text\_sentiment/config.yml file. The Caikit runtime loads the model and serves it so that it can be inferred or called.
 
 ## Before Starting
 
@@ -21,7 +30,7 @@ In one terminal, start the runtime server:
 python3 start_runtime.py
 ```
 
-This should start the runtime server with both grpc and http enabled.
+This should start the runtime server with grpc enabled.
 
 You should see output similar to the following:
 
@@ -65,38 +74,27 @@ The client code calls the model and queries it for sentiment analysis on 2 diffe
 You should see output similar to the following:
 
 ```command
-$ python3 client.py
+$ python client.py
 
+Duration: 40.58
 Text: I am not feeling well today!
 RESPONSE from gRPC: classes {
-  class_name: "NEGATIVE"
-  confidence: 0.9997759461402893
+  class_name: "LABEL_0"
+  confidence: 0.97693902254104614
 }
 
+Duration: 36.58
 Text: Today is a nice sunny day
 RESPONSE from gRPC: classes {
-  class_name: "POSITIVE"
-  confidence: 0.999869704246521
+  class_name: "LABEL_1"
+  confidence: 0.99803906679153442
 }
 
-
-Text: I am not feeling well today!
-RESPONSE from HTTP: {
-    "classes": [
-        {
-            "class_name": "NEGATIVE",
-            "confidence": 0.9997759461402893
-        }
-    ]
+Duration: 36.63
+Text: It's raining today
+RESPONSE from gRPC: classes {
+  class_name: "LABEL_0"
+  confidence: 0.94041192531585693
 }
 
-Text: Today is a nice sunny day
-RESPONSE from HTTP: {
-    "classes": [
-        {
-            "class_name": "POSITIVE",
-            "confidence": 0.999869704246521
-        }
-    ]
-}
 ```

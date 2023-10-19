@@ -32,7 +32,7 @@ if __name__ == "__main__":
                 "local_models_dir": models_directory,
                 "library": "text_sentiment",
                 "grpc": {"enabled": True},
-                "http": {"enabled": True},
+                "http": {"enabled": False},
             },
         }
     )

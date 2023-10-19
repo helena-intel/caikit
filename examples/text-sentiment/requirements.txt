@@ -1,9 +1,8 @@
 caikit[runtime-grpc, runtime-http]
 
-# Only needed for HuggingFace
-scipy
-torch
-transformers~=4.27.2
 
 # For http client
 requests
+
+# For OpenVINO inference on HuggingFace models. Includes transformers and PyTorch
+optimum[openvino]

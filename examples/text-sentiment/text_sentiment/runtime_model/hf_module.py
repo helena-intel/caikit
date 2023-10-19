@@ -16,7 +16,8 @@
 import os
 
 # Third Party
-from transformers import pipeline  # pylint: disable=import-error
+from optimum.intel import OVModelForSequenceClassification
+from transformers import AutoTokenizer, pipeline  # pylint: disable=import-error
 
 # Local
 from caikit.core import ModuleBase, ModuleLoader, ModuleSaver, TaskBase, module, task
@@ -44,12 +45,18 @@ class HuggingFaceSentimentModule(ModuleBase):
         super().__init__()
         loader = ModuleLoader(model_path)
         config = loader.config
-        model = pipeline(model=config.hf_artifact_path, task="sentiment-analysis")
+
+        if config.backend == "openvino":
+            ov_model = OVModelForSequenceClassification.from_pretrained(
+                model_id=config.model_id, export=True, device="CPU"
+            )
+            tokenizer = AutoTokenizer.from_pretrained(config.model_id)
+            model = pipeline(model=ov_model, tokenizer=tokenizer, task="sentiment-analysis")
+        else:
+            model = pipeline(model=config.model_id, task="sentiment-analysis")
         self.sentiment_pipeline = model
 
-    def run(  # pylint: disable=arguments-differ
-        self, text_input: str
-    ) -> ClassificationPrediction:
+    def run(self, text_input: str) -> ClassificationPrediction:  # pylint: disable=arguments-differ
         """Run HF sentiment analysis
         Args:
             text_input: str
@@ -60,15 +67,11 @@ class HuggingFaceSentimentModule(ModuleBase):
 
         class_info = []
         for result in raw_results:
-            class_info.append(
-                ClassInfo(class_name=result["label"], confidence=result["score"])
-            )
+            class_info.append(ClassInfo(class_name=result["label"], confidence=result["score"]))
         return ClassificationPrediction(class_info)
 
     @classmethod
-    def bootstrap(
-        cls, model_path="distilbert-base-uncased-finetuned-sst-2-english"
-    ):  # pylint: disable=arguments-differ
+    def bootstrap(cls, model_path):  # pylint: disable=arguments-differ
         """Load a HuggingFace based caikit model
         Args:
             model_path: str
